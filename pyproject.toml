@@ -8,15 +8,15 @@ description = "Example package for TorchServe deployment"
 authors = [{name = "Quy Dinh", email = "dvquys@gmail.com"}]
 requires-python = ">=3.8"
 dynamic = ["version"]
-dependencies = [
-    "loguru>=0.7.3"
-]
-
-[dependency-groups]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [
+    "loguru>=0.7.3",
     "ruff>=0.11.12"
+]
+production = [
+    "python-dotenv>=1.0.0",
 ]
 
 [tool.setuptools.dynamic]

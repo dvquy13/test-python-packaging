@@ -31,8 +31,8 @@ RUN if [ ! -f /tmp/package/pyproject.toml ]; then \
         exit 1; \
     fi
 
-# Install the package globally from the temporary location
-RUN pip install /tmp/package/
+# Install the package with only production dependencies
+RUN pip install '/tmp/package/[production]'
 
 # Clean up the temporary files
 RUN rm -rf /tmp/package
