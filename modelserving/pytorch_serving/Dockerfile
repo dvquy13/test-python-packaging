@@ -2,6 +2,7 @@ FROM python:3.11-slim
 
 # Copy only the necessary files for package installation
 COPY pyproject.toml /tmp/package/
+COPY VERSION /tmp/package/
 COPY src/ /tmp/package/src/
 
 # Debug: Show what's in the build context and validate structure
@@ -12,11 +13,17 @@ RUN echo "=== BUILD CONTEXT VALIDATION ===" && \
     ls -la /tmp/package/src/ && \
     echo "=== PYPROJECT.TOML CHECK ===" && \
     cat /tmp/package/pyproject.toml && \
+    echo "=== VERSION CHECK ===" && \
+    cat /tmp/package/VERSION && \
     echo "=========================="
 
 # Validate required files exist
 RUN if [ ! -f /tmp/package/pyproject.toml ]; then \
         echo "ERROR: pyproject.toml not found in build context!"; \
+        exit 1; \
+    fi && \
+    if [ ! -f /tmp/package/VERSION ]; then \
+        echo "ERROR: VERSION file not found in build context!"; \
         exit 1; \
     fi && \
     if [ ! -d /tmp/package/src ]; then \
