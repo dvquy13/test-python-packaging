@@ -5,7 +5,7 @@ This repository demonstrates how to package a Python project with a `src` module
 ## Project Structure
 
 ```
-test-python-zip-package/
+test-python-packaging/
 ├── src/
 │   ├── __init__.py
 │   ├── model/
