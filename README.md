@@ -1,6 +1,6 @@
 # Python Package Docker Setup
 
-This repository demonstrates how to package a Python project with a `src` module structure so that `from src import ...` works correctly in Docker containers without "No module named src" errors.
+This project demonstrates how to package a Python project with a `src` module structure for Docker deployment with **selective dependency installation**. It solves the common "No module named src" error by installing the project as a proper Python package using `pip install`, while ensuring Docker containers only include necessary dependencies.
 
 ## Project Structure
 
@@ -14,10 +14,13 @@ test-python-packaging/
 │   └── utils/
 │       ├── __init__.py
 │       └── preprocessing.py
+├── handler.py
 ├── pyproject.toml
+├── VERSION
 ├── modelserving/
 │   └── pytorch_serving/
 │       └── Dockerfile
+├── CLAUDE.md
 └── README.md
 ```
 
@@ -48,6 +51,7 @@ The `modelserving/pytorch_serving/Dockerfile` uses this strategy:
 ```dockerfile
 # Copy only necessary files (not everything)
 COPY pyproject.toml /tmp/package/
+COPY VERSION /tmp/package/
 COPY src/ /tmp/package/src/
 
 # Install package with only production dependencies
@@ -116,39 +120,6 @@ Expected to see:
 - python-dotenv (production dependency)  
 - NOT ruff and loguru (dev dependencies)
 
-```bash
-# Verify dev dependencies are NOT installed
-docker run --rm test-src-package python -c "
-import sys
-try:
-    import ruff
-    print('ERROR: ruff (dev dependency) should not be installed!')
-    sys.exit(1)
-except ImportError:
-    print('✓ ruff (dev dependency) correctly not installed')
-
-try:
-    import loguru  
-    print('ERROR: loguru (dev dependency) should not be installed!')
-    sys.exit(1)
-except ImportError:
-    print('✓ loguru (dev dependency) correctly not installed')
-
-try:
-    import dotenv
-    print('✓ python-dotenv (production dependency) correctly installed')
-except ImportError:
-    print('ERROR: python-dotenv (production dependency) missing!')
-    sys.exit(1)
-"
-```
-
-Expected output:
-```
-✓ ruff (dev dependency) correctly not installed
-✓ loguru (dev dependency) correctly not installed  
-✓ python-dotenv (production dependency) correctly installed
-```
 
 ### 5. Debug Build Context (if needed)
 
@@ -234,57 +205,26 @@ pip install -e .[production]
 
 ## Package Configuration
 
-For the Docker packaging approach to work, your `pyproject.toml` must be configured to include the `src` module. Here's how to set it up:
-
-### Required Configuration
+The current `pyproject.toml` configuration:
 
 ```toml
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "your-package-name"
-version = "1.0.0"
-description = "Your package description"
-requires-python = ">=3.7"
-dependencies = [
-    # Add your dependencies here
-]
+name = "test-python-packaging"
+dynamic = ["version"]
+dependencies = []  # Empty main dependencies
+
+[project.optional-dependencies]
+dev = ["loguru>=0.7.3", "ruff>=0.11.12"]
+production = ["python-dotenv>=1.0.0"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["src*"]
+include = ["src", "src.*"]
 ```
 
-### Key Configuration Explained
-
-- **`where = ["."]`**: Tells setuptools to look for packages in the current directory (repository root)
-- **`include = ["src*"]`**: Tells setuptools to include any package that starts with "src" (i.e., the `src` directory)
-- **`[build-system]`**: Specifies that we're using setuptools to build the package
-- **`[project]`**: Defines basic package metadata
-
-### How It Works
-
-When you run `pip install /tmp/package/`, setuptools:
-
-1. Reads the `pyproject.toml` configuration
-2. Discovers the `src` directory based on `include = ["src*"]`
-3. Installs `src` as a Python package in site-packages
-4. Makes `from src import ...` available globally
-
-### Alternative Configurations
-
-If your source code is structured differently, adjust accordingly:
-
-```toml
-# If your modules are in the root directory
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["mymodule*", "utils*"]
-
-# If your source code is in a different directory
-[tool.setuptools.packages.find]
-where = ["source"]
-include = ["*"]
-```

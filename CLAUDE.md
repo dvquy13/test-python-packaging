@@ -13,8 +13,9 @@ This project demonstrates how to package a Python project with a `src` module st
 
 ## Project structure:
 - `src/` directory with model and utils modules
+- `handler.py` TorchServe handler implementation
 - `modelserving/pytorch_serving/Dockerfile` for containerization
-- `VERSION` file for dynamic versioning
+- `VERSION` file for dynamic versioning (currently 1.0.0)
 - Package installation approach instead of PYTHONPATH manipulation
 
 ## Selective Dependency Management Strategy
